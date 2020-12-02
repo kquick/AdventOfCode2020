@@ -1,6 +1,9 @@
 (* The elves wish to reconcile the account.  The account contains a
    set of numbers (one per line).  Two of the numbers total 2020, and
-   the answer should be the multiplied value of those two numbers. *)
+   the answer should be the multiplied value of those two numbers.
+
+   This solution is written in Formulog (https://github.com/HarvardPL/formulog)
+*)
 
 (* Read the test input *)
 
@@ -12,9 +15,9 @@ input testinp(i32)
    how functions can be called from logic statements. *)
 
 fun result2(V: i32, W: i32) : i32 =
-   i32_mul(V, W)
+   i32_mul(V, W)  (* This is actually a logic statement *)
 fun result3(U: i32, V: i32, W: i32) : i32 =
-   V * W * U
+   V * W * U      (* But this is a functional statement *)
 
 (* This is the main solution function.  Given two numbers, complete
    with the result value only if those two numbers total 2020.  This
@@ -38,10 +41,13 @@ solve3(X, Y, Z, A) :-
             X != Y,
             X != Z,
             Y != Z,
-            (* A logic-based solution, which takes ~0.256s to solve *)
+            (* A logic-based solution, which takes ~9s to solve *)
             2020 = X + Y + Z,
-            (* An SMT-verified satisfiability solution.  Slow because this
-               invokes the solver for each pair (~11.568s) *)
+            (* An SMT-verified satisfiability solution.  This is
+               actually too slow to run, because it makes literally
+               millions of solver equations to be solved with no
+               framing.  It will eventually run out of memory (on a
+               32GB machine) without completing. *)
             (* is_sat(`2020 #= bv_add(bv_add(X, Y), Z)`), *)
             A = result3(X, Y, Z).
 
@@ -57,10 +63,6 @@ output verify_p2(i32)
 verify_p2(A) :- testinp(X), testinp(Y), testinp(Z),
                 solve3(X, Y, Z, A).
 
-(* Uncomment one to run with the test input *)
-(* :- verify_p1(_I). *)
-(* :- verify_p2(_I). *)
-
 (* Read and check the actual input *)
 
 @external
@@ -74,6 +76,16 @@ solution_part1(A) :- inp(X), inp(Y), solve2(X, Y, A).
 output solution_part2(i32)
 solution_part2(A) :- inp(X), inp(Y), inp(Z), solve3(X, Y, Z, A).
 
+(* Uncomment one to run with the test input *)
+(* :- verify_p1(_I). *)
+(* :- verify_p2(_I). *)
+
 (* :- solution_part1(_S). *)
-:- solution_part2(_S).
+(* :- solution_part2(_S). *)
+
+@topdown
+output solutions(i32, i32)
+solutions(Part1, Part2) :- solution_part1(Part1), solution_part2(Part2).
+:- solutions(_P1, _P2)
+
 

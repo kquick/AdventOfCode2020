@@ -1,0 +1,79 @@
+(* The elves wish to reconcile the account.  The account contains a
+   set of numbers (one per line).  Two of the numbers total 2020, and
+   the answer should be the multiplied value of those two numbers. *)
+
+(* Read the test input *)
+
+@external
+input testinp(i32)
+
+(* Compute the result value, functionally.  This could be done
+   logically, or even as a formula result, but this mode demonstrates
+   how functions can be called from logic statements. *)
+
+fun result2(V: i32, W: i32) : i32 =
+   i32_mul(V, W)
+fun result3(U: i32, V: i32, W: i32) : i32 =
+   V * W * U
+
+(* This is the main solution function.  Given two numbers, complete
+   with the result value only if those two numbers total 2020.  This
+   is a logic statement, but it uses the Z3 SMT solver to determine
+   the (extremely simple) satisfiability of the required formula. *)
+
+@topdown
+output solve2(i32, i32, i32)
+solve2(X, Y, A) :-
+            X != Y,
+            (* A logic-based solution, which takes ~0.256s to solve *)
+            (* 2020 = X + Y, *)
+            (* An SMT-verified satisfiability solution.  Slow because this
+               invokes the solver for each pair (~11.568s) *)
+            is_sat(`2020 #= bv_add(X, Y)`),
+            A = result2(X, Y).
+
+@topdown
+output solve3(i32, i32, i32, i32)
+solve3(X, Y, Z, A) :-
+            X != Y,
+            X != Z,
+            Y != Z,
+            (* A logic-based solution, which takes ~0.256s to solve *)
+            2020 = X + Y + Z,
+            (* An SMT-verified satisfiability solution.  Slow because this
+               invokes the solver for each pair (~11.568s) *)
+            (* is_sat(`2020 #= bv_add(bv_add(X, Y), Z)`), *)
+            A = result3(X, Y, Z).
+
+(* verify is used to supply each possible pair of test input values
+   and show the result *)
+
+@topdown
+output verify_p1(i32)
+verify_p1(A) :- testinp(X), testinp(Y), solve2(X, Y, A).
+
+@topdown
+output verify_p2(i32)
+verify_p2(A) :- testinp(X), testinp(Y), testinp(Z),
+                solve3(X, Y, Z, A).
+
+(* Uncomment one to run with the test input *)
+(* :- verify_p1(_I). *)
+(* :- verify_p2(_I). *)
+
+(* Read and check the actual input *)
+
+@external
+input inp(i32)
+
+@topdown
+output solution_part1(i32)
+solution_part1(A) :- inp(X), inp(Y), solve2(X, Y, A).
+
+@topdown
+output solution_part2(i32)
+solution_part2(A) :- inp(X), inp(Y), inp(Z), solve3(X, Y, Z, A).
+
+(* :- solution_part1(_S). *)
+:- solution_part2(_S).
+
